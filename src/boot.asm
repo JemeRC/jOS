@@ -1,15 +1,19 @@
-global start
-extern kmain
-
+[org 0x7c00]
 BITS 16
 
+KERNEL_OFFSET equ 0x1000    ; Adresa unde se va afla Kernel-ul
 
 start:
-    cli                     ; Opreste Intreruperile 
+    mov [BOOT_DRIVE], dl    ; BIOS salveaza ID-ul unitatii de boot in DL
+
+    cli                     ; Deactivam Intreruperile 
     xor ax, ax              ; AX = 0
     mov ds, ax              ; DS = 0
+    mov es, ax              ; ES = 0
     mov ss, ax              ; SS = 0
     mov sp, 0x7C00          ; SP = 0x7C00 (Seteaza Stiva sub Bootloader)
+
+    call load_kernel        ; Incarcam Kernelul pe Disk
 
     lgdt [gdt_descriptor]   ; Incarcarea GDT (Global Descriptor Table)
 
@@ -19,18 +23,53 @@ start:
 
     jmp CODE_SEG:init_pm
 
-;=========
-;   GDT
-;=========
+;------------------------------------------------------------------------------
+; Rutina pentru incarcarea Kernel-ului
+;------------------------------------------------------------------------------
+load_kernel:
+    mov bx, KERNEL_OFFSET   ; ES:BX = 0x0000:0x1000
+    mov dh, 20              
+    mov dl, [BOOT_DRIVE]    
+    call disk_load
+    ret
 
+;------------------------------------------------------------------------------
+; Rutina disk_load (Inlocuieste fisierul care iti lipsea)
+;------------------------------------------------------------------------------
+disk_load:
+    push dx                 ; Salvăm DH (numărul de sectoare cerute)
+    mov ah, 0x02            ; BIOS read sector function
+    mov al, dh              ; Numar de sectoare de citit
+    mov ch, 0x00            ; Cilindrul 0
+    mov dh, 0x00            ; Capul 0
+    mov cl, 0x02            ; Incepem de la sectorul 2
+    
+    int 0x13                ; Apel BIOS
+    
+    jc disk_error           ; Salt dacă Carry Flag e setat (eroare hardware)
+
+    pop dx                  ; Recuperăm DX original (DH = sectoare cerute)
+    cmp dh, al              ; COMPARĂM: sectoare cerute (DH) vs sectoare citite (AL)
+    jne disk_error          ; Dacă nu sunt egale, eroare de citire
+    ret
+
+disk_error:
+    mov ah, 0x0e
+    mov al, 'D'             ; Afisam 'D' pentru Disk Error
+    int 0x10
+    jmp $
+
+;------------------------------------------------------------------------------
+; GDT - Global Descriptor Table
+;------------------------------------------------------------------------------
 gdt_start:
-    dq 0x0000000000000000       ; Null Descriptor
+    dq 0x0000000000000000   ; Null Descriptor
 
 gdt_code:
-    dq 0x00CF9A000000FFFF       ; Code Segment
+    dq 0x00CF9A000000FFFF   ; Code Segment
 
 gdt_data:
-    dq 0x00CF92000000FFFF       ; Data Segment
+    dq 0x00CF92000000FFFF   ; Data Segment
 
 gdt_end:
 
@@ -41,22 +80,27 @@ gdt_descriptor:
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
 
-;=================
-;   32-bit Code
-;=================
-
+;------------------------------------------------------------------------------
+; 32-bit Protected Mode
+;------------------------------------------------------------------------------
 BITS 32
 
 init_pm:
-    mov ax, DATA_SEG        ;
-    mov ds, ax              ;
-    mov ss, ax              ; Actualizarea registrelor de segment
-    mov es, ax              ; pentru modul protejat
-    mov fs, ax              ;   
-    mov gs, ax              ;   
+    mov ax, DATA_SEG        ; Actualizam registrele de segment
+    mov ds, ax              
+    mov ss, ax              
+    mov es, ax              
+    mov fs, ax              
+    mov gs, ax              
 
-    mov esp, 0x90000        ; Mutarea Pointerului Stivei intr-un loc mai indepartat pentru siguranta
+    mov esp, 0x90000        ; Setam noua stiva in modul protejat
 
-    call kmain              ; Apelarea Kernelului
+    call KERNEL_OFFSET      ; Sarim la kernel!
 
-    jmp $                   ; Bucla Infinita
+    jmp $                   ; Blocaj in caz de return din kernel
+
+BOOT_DRIVE db 0             
+
+; Padding si Magic Number (Sectiunea de 512 bytes)
+times 510-($-$$) db 0       
+dw 0xaa55
