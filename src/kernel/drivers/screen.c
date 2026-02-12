@@ -57,7 +57,7 @@ static void handle_scrolling() {
         char* video_memory = (char*) VGA_MEMORY_ADDRESS;
         
         // P1: Mutam Ecranul cu un rand mai sus
-        for (int i = 0; i < (MAX_ROWS - 1) * MAX_COLUMNS * 2; i++) {
+        for (int i = MAX_COLUMNS * 2; i < (MAX_ROWS - 1) * MAX_COLUMNS * 2; i++) {
             video_memory[i] = video_memory[i + (MAX_COLUMNS * 2)];
         }
 
@@ -95,7 +95,7 @@ void kprint(char* message) {
             cursor_col = 0;
             cursor_row++;
         } else if (message[i] == '\b') { 
-            if (cursor_col > 0) {
+            if (cursor_col > 5) { // ! HARDCODED !
                 cursor_col--;
                 // Ștergem vizual litera (punem spațiu peste ea)
                 int back_offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
@@ -124,3 +124,4 @@ void kprint(char* message) {
 
     update_cursor(cursor_row, cursor_col);
 }
+

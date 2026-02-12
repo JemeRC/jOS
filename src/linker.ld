@@ -1,25 +1,23 @@
-ENTRY(start)
+ENTRY(kmain)
 
 SECTIONS
 {
-    . = 0x7C00;
+    . = 0x1000;
 
-    .text :
-    {
+    .text : {
+        *(.text.entry)
         *(.text)
     }
 
-    .data :
-    {
-        *(.data)
-    }
-    .rodata :
-    {
+    .rodata : {
         *(.rodata)
     }
 
-    .sig : AT(0x7C00 + 510)
-    {
-        SHORT(0xAA55);
+    .data : {
+        *(.data)
+    }
+
+    .bss : {
+        *(.bss)
     }
 }

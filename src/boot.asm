@@ -1,12 +1,12 @@
 [org 0x7c00]
 BITS 16
 
-KERNEL_OFFSET equ 0x1000    ; Adresa unde se va afla Kernel-ul
+KERNEL_OFFSET equ 0x1000    ; Adresa Kernelului
 
 start:
     mov [BOOT_DRIVE], dl    ; BIOS salveaza ID-ul unitatii de boot in DL
 
-    cli                     ; Deactivam Intreruperile 
+    cli                     ; Fara Intreruperi
     xor ax, ax              ; AX = 0
     mov ds, ax              ; DS = 0
     mov es, ax              ; ES = 0
@@ -24,7 +24,7 @@ start:
     jmp CODE_SEG:init_pm
 
 ;------------------------------------------------------------------------------
-; Rutina pentru incarcarea Kernel-ului
+; Incarcare Kernel
 ;------------------------------------------------------------------------------
 load_kernel:
     mov bx, KERNEL_OFFSET   ; ES:BX = 0x0000:0x1000
@@ -34,7 +34,7 @@ load_kernel:
     ret
 
 ;------------------------------------------------------------------------------
-; Rutina disk_load (Inlocuieste fisierul care iti lipsea)
+; Disk Load
 ;------------------------------------------------------------------------------
 disk_load:
     push dx                 ; Salvăm DH (numărul de sectoare cerute)
@@ -42,7 +42,7 @@ disk_load:
     mov al, dh              ; Numar de sectoare de citit
     mov ch, 0x00            ; Cilindrul 0
     mov dh, 0x00            ; Capul 0
-    mov cl, 0x02            ; Incepem de la sectorul 2
+    mov cl, 0x02            ; Sector 2
     
     int 0x13                ; Apel BIOS
     
@@ -95,12 +95,11 @@ init_pm:
 
     mov esp, 0x90000        ; Setam noua stiva in modul protejat
 
-    call KERNEL_OFFSET      ; Sarim la kernel!
+    call KERNEL_OFFSET      ; Pornim Kernelul
 
     jmp $                   ; Blocaj in caz de return din kernel
 
 BOOT_DRIVE db 0             
 
-; Padding si Magic Number (Sectiunea de 512 bytes)
 times 510-($-$$) db 0       
 dw 0xaa55
