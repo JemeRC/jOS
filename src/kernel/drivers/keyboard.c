@@ -2,72 +2,127 @@
 #include "ports.h"
 #include "../include/system_data.h"
 
-unsigned char keyboard_map[128] = {
+// STATE VARIABILES
+static int shift_active = 0;
+static int caps_lock_active = 0;
 
-    [0x02] = '1', [0x03] = '2', [0x04] = '3', [0x05] = '4',
-    [0x06] = '5', [0x07] = '6', [0x08] = '7', [0x09] = '8',
-    [0x0A] = '9', [0x0B] = '0', [0x0C] = '-', [0x0D] = '=',
 
-    [0x10] = 'q', [0x11] = 'w', [0x12] = 'e', [0x13] = 'r',
-    [0x14] = 't', [0x15] = 'y', [0x16] = 'u', [0x17] = 'i',
-    [0x18] = 'o', [0x19] = 'p', [0x1A] = '[', [0x1B] = ']',
-
-    [0x1E] = 'a', [0x1F] = 's', [0x20] = 'd', [0x21] = 'f',
-    [0x22] = 'g', [0x23] = 'h', [0x24] = 'j', [0x25] = 'k',
-    [0x26] = 'l', [0x27] = ';', [0x28] = '\'', [0x29] = '`',
-
-    [0x2B] = '\\', [0x2C] = 'z', [0x2D] = 'x', [0x2E] = 'c',
-    [0x2F] = 'v',  [0x30] = 'b', [0x31] = 'n', [0x32] = 'm',
-    [0x33] = ',',  [0x34] = '.', [0x35] = '/',
-
-    [0x39] = ' ',  // Space
+char get_letter_case(char lowercase) {
     
+    // XOR intre SHIFT si CAPS
+    if (shift_active != caps_lock_active) {
+        return lowercase - 32; // Conversie in litera mare (ASCII)
+    }
+    return lowercase;
+}
 
-    // Taste Speciale
-    [0x01] = 0x1B, // ESC (ASCII Escape)
-    [0x0E] = '\b', // Backspace
-    [0x0F] = '\t', // TAB
-    [0x1C] = '\n', // ENTER
+char scancode_to_ascii(unsigned char scancode) {
+    switch (scancode) {
+        // Randul I
+        case 0x02: return shift_active ? '!' : '1';
+        case 0x03: return shift_active ? '@' : '2';
+        case 0x04: return shift_active ? '#' : '3';
+        case 0x05: return shift_active ? '$' : '4';
+        case 0x06: return shift_active ? '%' : '5';
+        case 0x07: return shift_active ? '^' : '6';
+        case 0x08: return shift_active ? '&' : '7';
+        case 0x09: return shift_active ? '*' : '8';
+        case 0x0A: return shift_active ? '(' : '9';
+        case 0x0B: return shift_active ? ')' : '0';
+        case 0x0C: return shift_active ? '_' : '-';
+        case 0x0D: return shift_active ? '+' : '=';
+        case 0x0E: return '\b'; // Backspace
 
-    // Numpad
-    [0x37] = '*',
-    [0x47] = '7', [0x48] = '8', [0x49] = '9', [0x4A] = '-',
-    [0x4B] = '4', [0x4C] = '5', [0x4D] = '6', [0x4E] = '+',
-    [0x4F] = '1', [0x50] = '2', [0x51] = '3',
-    [0x52] = '0', [0x53] = '.',
+        // Randul II
+        case 0x0F: return '\t'; // Tab
+        case 0x10: return get_letter_case('q');
+        case 0x11: return get_letter_case('w');
+        case 0x12: return get_letter_case('e');
+        case 0x13: return get_letter_case('r');
+        case 0x14: return get_letter_case('t');
+        case 0x15: return get_letter_case('y');
+        case 0x16: return get_letter_case('u');
+        case 0x17: return get_letter_case('i');
+        case 0x18: return get_letter_case('o');
+        case 0x19: return get_letter_case('p');
+        
+        case 0x1A: return shift_active ? '{' : '[';
+        case 0x1B: return shift_active ? '}' : ']';
+        case 0x1C: return '\n'; // Enter
 
-    // F_ Keys
-    [0x3B] =  0 , [0x3C] =  0 , [0x3D] =  0 , [0x3E] = 0,
-    [0x3F] =  0 , [0x40] =  0 , [0x41] =  0 , [0x42] = 0,
-    [0x43] =  0 , [0x44] =  0 , [0x57] =  0 , [0x58] = 0,
+        // Randul III
+        case 0x1E: return get_letter_case('a');
+        case 0x1F: return get_letter_case('s');
+        case 0x20: return get_letter_case('d');
+        case 0x21: return get_letter_case('f');
+        case 0x22: return get_letter_case('g');
+        case 0x23: return get_letter_case('h');
+        case 0x24: return get_letter_case('j');
+        case 0x25: return get_letter_case('k');
+        case 0x26: return get_letter_case('l');
+        
+        case 0x27: return shift_active ? ':' : ';';
+        case 0x28: return shift_active ? '"' : '\'';
+        case 0x29: return shift_active ? '~' : '`';
 
-    // Modificatori
-    [0x2A] =  0 ,       // Shift Stânga
-    [0x36] =  0 ,       // Shift Dreapta
-    [0x1D] =  0 ,       // Control Stânga
-    [0x38] =  0 ,       // Alt Stânga
-    [0x3A] =  0 ,       // Caps Lock
-    
-    //Locks
-    [0x45] =  0 ,       // Num Lock
-    [0x46] =  0         // Scroll Lock
-};
+        // Randul IV
+        case 0x2B: return shift_active ? '|' : '\\';
+        case 0x2C: return get_letter_case('z');
+        case 0x2D: return get_letter_case('x');
+        case 0x2E: return get_letter_case('c');
+        case 0x2F: return get_letter_case('v');
+        case 0x30: return get_letter_case('b');
+        case 0x31: return get_letter_case('n');
+        case 0x32: return get_letter_case('m');
+        
+        case 0x33: return shift_active ? '<' : ',';
+        case 0x34: return shift_active ? '>' : '.';
+        case 0x35: return shift_active ? '?' : '/';
+        
+
+        case 0x39: return ' '; // Space
+
+        default: return 0;
+    }
+}
 
 char get_input_char() {
-    unsigned char scancode;
+    char c = 0;
     
-    while (1) {
-        if (port_byte_in(KEYBOARD_STATUS_PORT) & 1) {
-            scancode = port_byte_in(KEYBOARD_DATA_PORT);
+    while(1) {
+        unsigned char status = port_byte_in(KEYBOARD_STATUS_PORT);
+        
+        if (status & 0x01) {
+            unsigned char scancode = port_byte_in(KEYBOARD_DATA_PORT);
+
+
+            // SHIFT [pressed]
+            if (scancode == 0x2A || scancode == 0x36) {
+                shift_active = 1;
+                continue;
+            }
+            // SHIFT [released]
+            if (scancode == 0xAA || scancode == 0xB6) {
+                shift_active = 0;
+                continue;
+            }
+
+            // CAPSLOCK [toggle] 
+            if (scancode == 0x3A) {
+                caps_lock_active = !caps_lock_active;
+                continue;
+            }
             
-            // Tasta nu mai este apasata daca apare 1 la bitul 8 ( mai exact & 0x80 este adevarat)
-            if (scancode & 0x80) continue;
+            // Ignoram Key Release-urile
+            if (scancode & 0x80) {
+                continue;
+            }
 
-            // Daca cumva dam pe afara din tabel
-            if (scancode > 58) continue; 
+            c = scancode_to_ascii(scancode);
 
-            char c = keyboard_map[scancode];
-            if (c != 0) return c;
+            if (c != 0) {
+                return c;
+            }
         }
     }
 }

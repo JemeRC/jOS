@@ -1,8 +1,6 @@
 #ifndef STDIO_H
 #define STDIO_H
 
-#include <stdarg.h>
-
 #define EOF (-1)
 
 // -----------------
@@ -12,6 +10,7 @@
 // - Scrie un singur caracter pe ecran
 // 
 // - Primeste INT [ic]
+//
 // - Returneaza INT
 int putchar(int iChar);
 

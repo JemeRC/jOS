@@ -15,48 +15,48 @@ int atoi(const char *string){
     return number * (isNegative == 1 ? -1 : 1);
 }
 
-char* itoa(int value, char *string, int base){
+char* itoa(int value, char *string, int base) {
     
     // Limitare Baze
-    if ( base < 2 || base > 36 ){
+    if (base < 2 || base > 36) {
         *string = '\0';
-        return string; 
-    }
-
-    // Valoarea 0
-    if( value == 0 ){
-        string[0] = '0';
-        string[1] = '\0';
         return string;
     }
-    
+
+    char *ptr = string;
     char *start = string;
-    char isNegative = 0;
+    
+    unsigned int uValue;
+    
+    if (base == 10 && value < 0) {
+        *ptr++ = '-';
+        start++; 
 
-    // Daca avem baza 10, ii vom pune -
-    if( value < 0 && base == 10 ){
-        isNegative = 1;
-        value = -value;
-    } 
+        // Pentru cazul in care value este INT_MIN
+        uValue = (unsigned int)(-(value + 1)) + 1;
 
-    unsigned int uValue = (unsigned int) value;
-
-    while( uValue != 0 ){
-        char result = uValue % base;
-        
-        if( result > 9 )
-            *string++ = (result - 10) + 'a';
-        else
-            *string++ = result + '0';
-        
-        uValue /= base;
+    } else {
+        uValue = (unsigned int)value;
     }
 
-    if( isNegative ) *string++ = '-';
+    do {
+        unsigned char digit = uValue % base;
+        *ptr++ = (digit < 10) ? (digit + '0') : (digit - 10 + 'a');
+        uValue /= base;
+    } while (uValue != 0);
 
-    *string = '\0';
+    *ptr = '\0';
 
-    return strrev(start);
+    char *end = ptr - 1;
+    while (start < end) {
+        char temp = *start;
+        *start = *end;
+        *end = temp;
+        start++;
+        end--;
+    }
+
+    return string;
 }
 
 int abs(int x){

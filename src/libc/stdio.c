@@ -1,89 +1,104 @@
 #include "include/stdio.h"
 #include "include/stdlib.h"
+#include "include/ctype.h"
+#include "include/stdarg.h"
 #include "../kernel/drivers/screen.h"
 #include "../kernel/drivers/keyboard.h"
 
 
+int puts(const char *string){
+    return kprint((char*) string);
+}
+
 int putchar(int iChar){
     kprint_char( (char) iChar);
     return iChar;
-}
+}    
 
-int puts(const char *string){
-    kprint( (char*) string);
-    kprint_char('\n');
-    return 1;
-}
-
-
+#define PRINTF_BUFFER_SIZE 1024
 int printf(const char *format, ...) {
     va_list parameters;
     va_start(parameters, format);
 
-    int written = 0;
+    char buffer[PRINTF_BUFFER_SIZE];
+    int buffer_index = 0;
+    int total_written = 0;
+
+
+    #define FLUSH_BUFFER() { \
+        buffer[buffer_index] = '\0'; \
+        total_written += kprint(buffer); \
+        buffer_index = 0; \
+    }
+
+    #define PUT_CHAR(c) { \
+        buffer[buffer_index++] = (c); \
+        if (buffer_index >= PRINTF_BUFFER_SIZE - 1) FLUSH_BUFFER(); \
+    }
 
     while (*format != '\0') {
         if (*format != '%') {
-            putchar(*format);
-            written++;
+            PUT_CHAR(*format);
             format++;
             continue;
         }
 
-        format++; // Sarim peste '%'
-        
+        format++; // Sărim peste '%'
+
+        // Gestionare cazuri
         switch (*format) {
-            case 'c': {
+            case 'c': { // Character
                 char c = (char) va_arg(parameters, int);
-                putchar(c);
-                written++;
+                PUT_CHAR(c);
                 break;
             }
-            case 's': {
+            case 's': { // String
                 const char *str = va_arg(parameters, const char*);
-
-                kprint((char*) str);
-                
+                while (*str) {
+                    PUT_CHAR(*str++);
+                }
                 break;
             }
-            case 'd': {
+            case 'd': { // Integer (Decimal)
                 int d = va_arg(parameters, int);
-
-                char buffer[32];
-                itoa(d, buffer, 10);
-                char *ptr = buffer;
-                
-                written += kprint(buffer);
+                char temp_buf[32];
+                itoa(d, temp_buf, 10);
+                char *ptr = temp_buf;
+                while (*ptr) {
+                    PUT_CHAR(*ptr++);
+                }
                 break;
             }
-            case 'x': {
+            case 'x': { // Integer (heXadecimal)
                 int x = va_arg(parameters, int);
-                char buffer[34];
-                buffer[0] = '0';
-                buffer[1] = 'x';
-                char *ptr = buffer;
-                itoa(x, ptr + 2, 16);
-                
-                written += kprint(buffer);
+                char temp_buf[32];
+                PUT_CHAR('0'); 
+                PUT_CHAR('x');
+                itoa(x, temp_buf, 16);
+                char *ptr = temp_buf;
+                while (*ptr) {
+                    PUT_CHAR(*ptr++);
+                }
                 break;
             }
             default: {
-                putchar('%');
-                written++;
+                PUT_CHAR('%');
+                PUT_CHAR(*format);
                 break;
             }
         }
         format++;
     }
 
+    if (buffer_index > 0) {
+        FLUSH_BUFFER();
+    }
+
     va_end(parameters);
-    return written;
+    return total_written;
 }
-
-
 int getchar(void){
-    char c = get_input_char();
-    return (int) c;
+    return (int) get_input_char();
 }
 
 char* gets(char *buffer){
@@ -96,24 +111,22 @@ char* gets(char *buffer){
         if(c == '\b') {
             if(index > 0){
                 index--;
-                kprint("\b \b");
+                putchar(c);
             }
             continue;
         }
 
         if(c == '\n') {
+            putchar(c);
             buffer[index] = '\0';
-            kprint_char('\n');
             return buffer;
         }
 
-        buffer[index++] = c;
-        kprint_char(c);
+        if (index < 254) { 
+            buffer[index++] = c;
+            putchar(c);
+        }
     }
-}
-
-_Bool isspace(char caracter){
-    return (caracter == ' ' ? 1 : 0);
 }
 
 int scanf(const char *format, ...){

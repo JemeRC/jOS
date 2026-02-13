@@ -65,7 +65,7 @@ int strncmp(const char *firstString,const char *secondString, size_t numberOfEle
 
 
 
-char* strchr(const char *string, const char caracter){
+char* strchr(const char *string, int caracter){
     while( *string != caracter ){
         if( *string == 0 ) return NULL;
         string++;
@@ -102,6 +102,8 @@ char* strstr(const char *searchLocationString, const char *searchedString){
     return NULL;
 }
 
+
+
 char* strrev(char *string){
     if(!string) return NULL;
 
@@ -115,4 +117,59 @@ char* strrev(char *string){
     }
 
     return string;
+}
+
+
+
+void* memset(void* ptr, int value, size_t num){
+    unsigned char* p = (unsigned char*)ptr;
+    while (num--) {
+        *p++ = (unsigned char)value;
+    }
+    return ptr;
+}
+
+
+void* memcpy(void* destination, const void* source, size_t num) {
+    unsigned char* dst = (unsigned char*)destination;
+    const unsigned char* src = (const unsigned char*)source;
+    
+    while (num--) {
+        *dst++ = *src++;
+    }
+    return destination;
+}
+
+
+void* memmove(void* destination, const void* source, size_t num) {
+    unsigned char* dst = (unsigned char*)destination;
+    const unsigned char* src = (const unsigned char*)source;
+
+    if (dst < src) {
+        while (num--) {
+            *dst++ = *src++;
+        }
+    } else {
+        dst += num;
+        src += num;
+        while (num--) {
+            *--dst = *--src;
+        }
+    }
+    return destination;
+}
+
+
+int memcmp(const void* ptr1, const void* ptr2, size_t num) {
+    const unsigned char* p1 = (const unsigned char*)ptr1;
+    const unsigned char* p2 = (const unsigned char*)ptr2;
+
+    while (num--) {
+        if (*p1 != *p2) {
+            return *p1 - *p2;
+        }
+        p1++;
+        p2++;
+    }
+    return 0;
 }

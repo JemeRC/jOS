@@ -1,6 +1,11 @@
 #ifndef SYSTEM_DATA_H
 #define SYSTEM_DATA_H
 
+// === OS INFO ===
+#define OS_NAME "jOS"
+#define KERNEL_VERSION "0.2"
+#define ARCHITECTURE "x86 (32-bit Protected Mode)"
+
 // === Memorie Video ===
 #define VGA_MEMORY_ADDRESS 0xB8000
 #define MAX_ROWS 25

@@ -67,7 +67,7 @@ int strncmp(const char *firstString, const char *secondString, size_t numberOfEl
 // - In cazul in care nu se afla CHAR-ul [caracter] in STRING [*string], functia va returna NULL
 // 
 // - Cautarea se face de la stanga la dreapta ( --> )
-char* strchr(const char *string, const char caracter);
+char* strchr(const char *string, int caracter);
 
 
 
@@ -95,5 +95,10 @@ char* strstr(const char *searchLocationString, const char *searchedString);
 // - Returneaza POINTER la STRING-ul [*string] modificat
 char* strrev(char *string);
 
+
+void* memset(void* ptr, int value, size_t num);
+void* memcpy(void* destination, const void* source, size_t num);
+void* memmove(void* destination, const void* source, size_t num);
+int memcmp(const void* ptr1, const void* ptr2, size_t num);
 
 #endif
