@@ -14,7 +14,6 @@ void execute_command(char *input) {
     } 
     if (strcmp(input, "clear") == 0) {
         clear_screen();
-        kprint("                                                                 Version: [0.2] \n");
         return;
     }
     if (strncmp(input, "hex", 3) == 0) {

@@ -1,8 +1,6 @@
 #ifndef STDLIB_H
 #define STDLIB_H
 
-#include "stddef.h"
-
 // - ASCII to INT
 // 
 // - Conversteste un STRING [*string] intr-un INT si il returneaza
@@ -17,5 +15,8 @@ char* itoa(int value, char *string, int base);
 
 // - Partea intreaga a numarului x
 int abs(int x);
+
+//
+int strtol(const char *str, char **endptr, int base);
 
 #endif

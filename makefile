@@ -1,62 +1,110 @@
-# Directories
-SRC_DIR = src
-BUILD_DIR = build
-KERNEL_DIR = $(SRC_DIR)/kernel
-DRIVERS_DIR = $(SRC_DIR)/kernel/drivers
-SHELL_DIR = $(SRC_DIR)/kernel/shell
-LIBC_DIR = $(SRC_DIR)/libc
+# ==============================================================================
+# BUILD CONFIGURATION
+# ==============================================================================
 
-# Source Files
-KERNEL_SOURCES = $(wildcard $(KERNEL_DIR)/*.c)
-DRIVERS_SOURCES = $(wildcard $(DRIVERS_DIR)/*.c)
-SHELL_SOURCES = $(wildcard $(SHELL_DIR)/*.c)
-LIBC_SOURCES = $(wildcard $(LIBC_DIR)/*.c)
+# Compiler
+CC = i686-elf-gcc
+CCFLAGS = -g -ffreestanding -m32 -fno-stack-protector -I$(LIBC_DIR)/include -I$(KERNEL_DIR)/include
 
-# Object Files
-OBJ_FILES = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(KERNEL_SOURCES))) \
-            $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(DRIVERS_SOURCES))) \
-			$(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SHELL_SOURCES))) \
-            $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(LIBC_SOURCES)))
-
-
-# Compiler Flags
-CFLAGS = -ffreestanding -m32 -fno-stack-protector -I$(LIBC_DIR)/include -g
-
-# Linker Flags
+# Linker
+LD = i686-elf-ld
 LDFLAGS = -T $(SRC_DIR)/linker.ld --oformat binary
 
-Start: Directories Link
+# Source Directories
+SRC_DIR 	= src
+KERNEL_DIR 	= $(SRC_DIR)/kernel
+DRIVERS_DIR = $(SRC_DIR)/kernel/drivers
+SHELL_DIR 	= $(SRC_DIR)/kernel/shell
+LIBC_DIR 	= $(SRC_DIR)/libc
+
+# Build Directories
+BUILD_DIR 			= build
+BUILD_KERNEL_DIR	= $(BUILD_DIR)/kernel
+BUILD_DRIVERS_DIR	= $(BUILD_DIR)/drivers
+BUILD_SHELL_DIR 	= $(BUILD_DIR)/shell
+BUILD_LIBC_DIR 		= $(BUILD_DIR)/libc
+
+# ==============================================================================
+# SOURCE LOCATIONS
+# ==============================================================================
+
+# Source Files
+KERNEL_SOURCES 	= $(wildcard $(KERNEL_DIR)/*.c  )
+DRIVERS_SOURCES = $(wildcard $(DRIVERS_DIR)/*.c )
+SHELL_SOURCES 	= $(wildcard $(SHELL_DIR)/*.c	)
+LIBC_SOURCES 	= $(wildcard $(LIBC_DIR)/*.c    )
+
+# Object Files
+KERNEL_OBJS 	= $(KERNEL_SOURCES:$(KERNEL_DIR)/%.c=$(BUILD_KERNEL_DIR)/%.o)
+DRIVERS_OBJS	= $(DRIVERS_SOURCES:$(DRIVERS_DIR)/%.c=$(BUILD_DRIVERS_DIR)/%.o)
+SHELL_OBJS 		= $(SHELL_SOURCES:$(SHELL_DIR)/%.c=$(BUILD_SHELL_DIR)/%.o)
+LIBC_OBJS 		= $(LIBC_SOURCES:$(LIBC_DIR)/%.c=$(BUILD_LIBC_DIR)/%.o)
+
+KERNEL_ENTRY_OBJ = $(BUILD_KERNEL_DIR)/kernel.o
+
+ALL_OBJS = $(KERNEL_OBJS) $(DRIVERS_OBJS) $(LIBC_OBJS) $(SHELL_OBJS)
+
+# ==============================================================================
+# REGULI DE BUILD
+# ==============================================================================
+
+Start: Directories $(BUILD_DIR)/os-image.img
+
+debug:
+	@echo "SHELL SOURCES: $(SHELL_SOURCES)"
+	@echo "SHELL OBJS:    $(SHELL_OBJS)"
 
 Directories:
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_KERNEL_DIR)
+	@mkdir -p $(BUILD_DRIVERS_DIR)
+	@mkdir -p $(BUILD_SHELL_DIR)
+	@mkdir -p $(BUILD_LIBC_DIR)
 
-Link: $(OBJ_FILES) AssemblyObject
-	i686-elf-ld -o $(BUILD_DIR)/kernel.bin $(LDFLAGS) $(OBJ_FILES)
-	
-	cat $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin > $(BUILD_DIR)/os-image.bin
-	truncate -s +10k $(BUILD_DIR)/os-image.bin
+# OS Image
+$(BUILD_DIR)/os-image.img: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin
+	cat $^ > $@
+	truncate -s +10k $@
+
+# Link
+$(BUILD_DIR)/kernel.bin: $(KERNEL_ENTRY_OBJ) $(ALL_OBJS)
+	$(LD) -o $@ -Ttext 0x1000 -e kmain --oformat binary $^
+
+# BootLoader
+$(BUILD_DIR)/boot.bin: $(SRC_DIR)/boot/boot.asm
+	nasm -f bin $< -o $@
+
+
 
 # Kernel 
-$(BUILD_DIR)/%.o: $(KERNEL_DIR)/%.c
-	i686-elf-gcc $(CFLAGS) -c $< -o $@
+$(BUILD_KERNEL_DIR)/%.o: $(KERNEL_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Drivers
-$(BUILD_DIR)/%.o: $(DRIVERS_DIR)/%.c
-	i686-elf-gcc $(CFLAGS) -c $< -o $@
+$(BUILD_DRIVERS_DIR)/%.o: $(DRIVERS_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Shell
-$(BUILD_DIR)/%.o: $(SHELL_DIR)/%.c
-	i686-elf-gcc $(CFLAGS) -c $< -o $@
+$(BUILD_SHELL_DIR)/%.o: $(SHELL_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # LibC
-$(BUILD_DIR)/%.o: $(LIBC_DIR)/%.c
-	i686-elf-gcc $(CFLAGS) -c $< -o $@
+$(BUILD_LIBC_DIR)/%.o: $(LIBC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Bootloader
-AssemblyObject: $(SRC_DIR)/boot.asm
-	nasm -f bin $(SRC_DIR)/boot.asm -o $(BUILD_DIR)/boot.bin
 
+# ==============================================================================
+# UTILITIES
+# ==============================================================================
+
+debug:
+	@echo "KERNEL SOURCES: $(KERNEL_SOURCES)"
+	@echo "KERNEL OBJS:    $(KERNEL_OBJS)"
+	@echo "ALL OBJS:       $(ALL_OBJS)"
 
 clean:
 	rm -rf $(BUILD_DIR)
 clear: clean
+
+run: Start
+	qemu-system-i386 -fda $(BUILD_DIR)/os-image.img

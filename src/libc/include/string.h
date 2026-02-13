@@ -67,7 +67,7 @@ int strncmp(const char *firstString, const char *secondString, size_t numberOfEl
 // - In cazul in care nu se afla CHAR-ul [caracter] in STRING [*string], functia va returna NULL
 // 
 // - Cautarea se face de la stanga la dreapta ( --> )
-char* strchr(const char *string, char caracter);
+char* strchr(const char *string, const char caracter);
 
 
 
@@ -78,7 +78,7 @@ char* strchr(const char *string, char caracter);
 // - In cazul in care nu se afla CHAR-ul [caracter] in STRING [*string], functia va returna NULL
 // 
 // - Cautarea se face de la dreapta la stanga ( <-- )
-char* strrchr(const char *string, char caracter);       // De la dreapta
+char* strrchr(const char *string, int caracter);       // De la dreapta
 
 
 // - Cauta STRING-ul [*searchedString] in STRING-ul [*searchLocationString] dat
@@ -88,7 +88,7 @@ char* strrchr(const char *string, char caracter);       // De la dreapta
 // - In cazul in care nu se afla STRING-ul [*searchedString] in STRING-ul [*searchLocationString], functia va returna NULL
 // 
 // - Cautarea se face de la stanga la dreapta ( --> )
-char* strstr(const char *searchLocationString,const char *searchedString);
+char* strstr(const char *searchLocationString, const char *searchedString);
 
 // - Inverseasa ordinea caracterelor din STRING [*string]
 //

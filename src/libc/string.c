@@ -74,7 +74,7 @@ char* strchr(const char *string, const char caracter){
 }
 
 
-char* strrchr(const char *string, const char caracter){
+char* strrchr(const char *string, int caracter){
     const char *last = NULL;
     do{
         if( *string == caracter ) last = string;

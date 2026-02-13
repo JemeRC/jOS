@@ -3,8 +3,8 @@
 #include "../include/system_data.h"
 
 // Pozitia Cursorului
-int cursor_col = 0;
-int cursor_row = 0;
+static int cursor_col = 0;
+static int cursor_row = 0;
 
 // Mutarea Cursorului intr-o anumita Locatie
 void update_cursor(int row, int col) {
@@ -77,51 +77,72 @@ static void handle_scrolling() {
     }
 }
 
-// Primim un sir dat de variabila Message, vrem sa il afisam
-void kprint(char* message) {
+void kprint_char(char character){
+    char *video_memory = (char*) VGA_MEMORY_ADDRESS;
+    if (character == '\n') {
+            cursor_col = 0;
+            cursor_row++;
+    } else if (character == '\b') { 
+        if (cursor_col > 5) { // ! HARDCODED !
+            cursor_col--;
+            int offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
+            video_memory[offset] = ' '; 
+            video_memory[offset + 1] = COLOR_WHITE;
+        }
+    } else {
+        int offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
+        video_memory[offset] = character;
+        video_memory[offset + 1] = COLOR_WHITE;
+        cursor_col++;
+    }
 
-    // Pointer la Adresa Ecranului
+    if (cursor_col >= MAX_COLUMNS) {
+        cursor_col = 0;
+        cursor_row++;
+    }
+    
+    if (cursor_row >= MAX_ROWS) handle_scrolling();
+
+    update_cursor(cursor_row, cursor_col);
+}
+
+int kprint(char* message) {
+
     char* video_memory = (char*) VGA_MEMORY_ADDRESS;
+    int writtenCharacters = 0;
     int i = 0;
     
-    // Vom afisa mesajul pana dam de NULL
     while (message[i] != 0) {
 
-        // Calculam pozitia unde vom scrie
-        int offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
-
-        // Daca in Sirul dat exista un ENDLINE, mutam cursor-ul pe urmatoarea linie la inceput
         if (message[i] == '\n') {
             cursor_col = 0;
             cursor_row++;
         } else if (message[i] == '\b') { 
             if (cursor_col > 5) { // ! HARDCODED !
                 cursor_col--;
-                // Ștergem vizual litera (punem spațiu peste ea)
-                int back_offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
-                video_memory[back_offset] = ' '; 
-                video_memory[back_offset+1] = COLOR_WHITE;
+                int offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
+                video_memory[offset] = ' '; 
+                video_memory[offset + 1] = COLOR_WHITE;
+                writtenCharacters--;
             }
         } else {
-        // Daca nu continuam sa afisam pe aceasi linie
+            int offset = (cursor_row * MAX_COLUMNS + cursor_col) * 2;
             video_memory[offset] = message[i];
             video_memory[offset + 1] = COLOR_WHITE;
             cursor_col++;
+            writtenCharacters++;
         }
 
-        
-
-        // Daca se atinge limita din dreapta, mutam cursorul pe urmatoarea linie
         if (cursor_col >= MAX_COLUMNS) {
             cursor_col = 0;
             cursor_row++;
         }
         
-        // Daca se ajunge la limita de jos, vom muta tot mai sus pentru a face efectul de scroll
         if (cursor_row >= MAX_ROWS) handle_scrolling();
         i++;
     }
 
     update_cursor(cursor_row, cursor_col);
+    return writtenCharacters;
 }
 

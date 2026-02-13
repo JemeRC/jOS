@@ -4,8 +4,12 @@
 // Curata Ecranul de Textul anterior afisat
 void clear_screen();
 
-// Printarea pe Consola a unui String
-void kprint(char* message);
+void kprint_char(char caracter);
+
+// - Printeaza pe consola un STRING [*message]
+//
+// - Returneaza numarul de caractere vizibile (ignora \n, scade \b)
+int kprint(char* message);
 
 // Printarea pe Consola la o anumita locatie
 void kprint_at(char* message, int col, int row);

@@ -1,5 +1,5 @@
 #!/bin/bash
-OS_BIN="build/os-image.bin"
+OS_BIN="build/os-image.img"
 make clean
 make
 
