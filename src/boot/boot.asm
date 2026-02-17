@@ -63,13 +63,13 @@ disk_error:
 ; GDT - Global Descriptor Table
 ;------------------------------------------------------------------------------
 gdt_start:
-    dq 0x0000000000000000   ; Null Descriptor
+    dq 0x0000000000000000   ; Null Descriptor (Index 0) -> Offset 0x00
 
 gdt_code:
-    dq 0x00CF9A000000FFFF   ; Code Segment
+    dq 0x00CF9A000000FFFF   ; Code Segment (Index 1) -> Offset 0x08
 
 gdt_data:
-    dq 0x00CF92000000FFFF   ; Data Segment
+    dq 0x00CF92000000FFFF   ; Data Segment (Index 2) -> Offset 0x10 (16)
 
 gdt_end:
 

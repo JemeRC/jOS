@@ -11,7 +11,8 @@ int puts(const char *string){
 }
 
 int putchar(int iChar){
-    kprint_char( (char) iChar);
+    char s[2] = { (char)iChar, '\0'};
+    kprint(s);
     return iChar;
 }    
 
@@ -98,7 +99,7 @@ int printf(const char *format, ...) {
     return total_written;
 }
 int getchar(void){
-    return (int) get_input_char();
+    return (int) keyboard_read_char();
 }
 
 char* gets(char *buffer){
@@ -108,23 +109,21 @@ char* gets(char *buffer){
     while(1){
         c = (char) getchar();
 
+        if(c == 0) continue;
         if(c == '\b') {
             if(index > 0){
                 index--;
-                putchar(c);
             }
             continue;
         }
 
         if(c == '\n') {
-            putchar(c);
             buffer[index] = '\0';
             return buffer;
         }
 
         if (index < 254) { 
             buffer[index++] = c;
-            putchar(c);
         }
     }
 }

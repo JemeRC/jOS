@@ -3,7 +3,7 @@
 
 // === OS INFO ===
 #define OS_NAME "jOS"
-#define KERNEL_VERSION "0.2"
+#define KERNEL_VERSION "0.3"
 #define ARCHITECTURE "x86 (32-bit Protected Mode)"
 
 // === Memorie Video ===
